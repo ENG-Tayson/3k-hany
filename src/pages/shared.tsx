@@ -123,6 +123,9 @@ export function PeriodBox({ period, weight, startDate }: { period: any; weight?:
   );
 }
 
+// زر «مسح» النهائي مخفي حتى تُطبَّق مهاجرة 20261023010000_hard_delete على Supabase.
+export const HARD_DELETE_ENABLED = false;
+
 /** حذف نهائي: يعيد التحقق من كلمة مرور الدخول عبر Supabase Auth، والخادم يرفض الحذف بدون مصادقة حديثة. */
 export function DeleteModal({ title, summary, onDelete, onClose }: { title: string; summary: ReactNode; onDelete: (requestId: string) => Promise<any>; onClose: () => void }) {
   const [password, setPassword] = useState('');

@@ -3,7 +3,7 @@ import { DateInput, Field, Modal, Money, NumInput, Pager, SaveStatus, useRetroCo
 import { notifyChanged, rpc, useLoad, useSaver } from '../lib/api';
 import { cairoToday, formatDateAr, isValidDate } from '../lib/dates';
 import { parseMoney } from '../lib/money';
-import { AuditModal, CancelModal, DeleteModal, OpeningCard, PeriodBox } from './shared';
+import { AuditModal, CancelModal, DeleteModal, HARD_DELETE_ENABLED, OpeningCard, PeriodBox } from './shared';
 
 const TYPE_AR: Record<string, string> = { in: 'تحويل وارد', out: 'سحب/استلام فلوس' };
 const LIMIT = 50;
@@ -96,7 +96,7 @@ export function InstaPage({ state, reloadState }: { state: any; reloadState: () 
                 {e.status === 'active' && <button className="btn small ghost" onClick={() => setEditing(e)}>تصحيح</button>}
                 {e.status === 'active' && <button className="btn small ghost" onClick={() => setCancelling(e)}>إلغاء</button>}
                 <button className="btn small ghost" onClick={() => setHistory(e.id)}>السجل</button>
-                <button className="btn small ghost danger-text" onClick={() => setDeleting(e)}>مسح</button>
+                {HARD_DELETE_ENABLED && <button className="btn small ghost danger-text" onClick={() => setDeleting(e)}>مسح</button>}
               </td>
             </tr>
           ))}</tbody>

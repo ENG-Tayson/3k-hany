@@ -3,7 +3,7 @@ import { DateInput, Field, Modal, Money, NumInput, SaveStatus, useRetroConfirm }
 import { notifyChanged, rpc, useLoad, useSaver } from '../lib/api';
 import { cairoToday, formatDateAr, isValidDate } from '../lib/dates';
 import { parseMoney } from '../lib/money';
-import { AuditModal, CancelModal, DeleteModal } from './shared';
+import { AuditModal, CancelModal, DeleteModal, HARD_DELETE_ENABLED } from './shared';
 
 const STATUS_AR: Record<string, string> = { unpaid: 'لم يسدد', partial: 'سداد جزئي', paid: 'تم السداد بالكامل', none: 'لا يوجد مبلغ' };
 
@@ -93,7 +93,7 @@ function PersonDetail({ id, asOf }: { id: string; asOf: string }) {
               <td><Money v={e.amount} /></td><td>{e.note}</td><td><Money v={e.running} /></td>
               <td className="actions">{e.status === 'active' && <button className="btn small ghost" onClick={() => setEditing(e)}>تصحيح</button>}{e.status === 'active' && <button className="btn small ghost" onClick={() => setCancelling(e)}>إلغاء</button>}
                 <button className="btn small ghost" onClick={() => setHistory(e.id)}>السجل</button>
-                <button className="btn small ghost danger-text" onClick={() => setDeleting(e)}>مسح</button></td></tr>))}</tbody></table>
+                {HARD_DELETE_ENABLED && <button className="btn small ghost danger-text" onClick={() => setDeleting(e)}>مسح</button>}</td></tr>))}</tbody></table>
       </>}
       {p.error && <div className="status fail">{p.error}</div>}
       <div className="form">
