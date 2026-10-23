@@ -12,3 +12,4 @@ e2e/test-results/
 e2e/evidence/*.json
 .vercel/
 .claude/settings.local.json
+.env.production
