@@ -11,7 +11,7 @@
 
 المتطلبات: Node.js 20 أو أحدث (مُختبر على 24.11.1) واتصال إنترنت.
 
-1. تأكد من وجود الملف `.env.local` في المجلد (موجود الآن). إن لم يوجد: انسخ `.env.example` إلى `.env.local`، وضع فيه:
+1. تأكد من وجود الملف `.env.local` في المجلد (موجود الآن). إن لم يوجد: أنشئ ملفًا نصيًا بهذا الاسم وضع فيه السطرين:
    - `VITE_SUPABASE_URL=https://nqxttghiglqrobwguvqm.supabase.co`
    - `VITE_SUPABASE_PUBLISHABLE_KEY=` المفتاح العام (يبدأ بـ `sb_publishable_`). تجده في Supabase ← Project Settings ← API Keys.
    - **لا تضع أبدًا** مفتاح `service_role` أو `secret` أو كلمة مرور قاعدة البيانات في هذا الملف.

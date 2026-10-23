@@ -3,7 +3,7 @@ chcp 65001 >nul
 title دفاتر الذهب
 cd /d "%~dp0"
 if not exist ".env.local" (
-  echo [!] ملف .env.local غير موجود. انسخ .env.example إلى .env.local واكتب فيه رابط المشروع والمفتاح العام.
+  echo [!] ملف .env.local غير موجود. أنشئه واكتب فيه VITE_SUPABASE_URL و VITE_SUPABASE_PUBLISHABLE_KEY (راجع README).
   pause
   exit /b 1
 )
