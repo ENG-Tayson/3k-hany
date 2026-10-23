@@ -1,0 +1,18 @@
+
+ RUN  v5.0.5 C:/Users/Mina diaa/Desktop/3k hany
+
+stdout | tests/db/volume_props_dates.test.ts > T18 حجم واقعي: 10,000 حركة > أرصدة صحيحة، تصفح وبحث، وانتقال بين الأيام مع قياس الزمن
+T18_TIMINGS_MS {"restore_10000":630,"day_report_avg":17,"qat_page_avg":40,"search_trader":22,"period_statement":12,"export_10000":241,"rpc_write_avg":2}
+
+stdout | tests/db/schema_fingerprint.test.ts > بصمة المخطط المحلي
+LOCAL_SCHEMA_FINGERPRINT {"functions_md5":"ab0a93cf9d5fe0c25b473313e7797239","function_count":"54","columns_md5":"d35780e0fe451c7293649656e4568fd5","policies_md5":"92aac4e2132fb796ca86745c147dd1cb","constraints_md5":"c8f442c8817093baea856cb347d729fa","table_acl_md5":"80e76c68b3d1093bb8ffc3fabcaab13c"}
+
+
+ Test Files  10 passed (10)
+      Tests  67 passed (67)
+   Start at  00:37:04
+   Duration  17.79s (tests 96%, import 3%)
+
+    Isolate  10 workers spawned · ~115ms startup each (spawn + environment, per file)
+             at least ~1.04s faster with isolate: false — reuses workers across files instead of one per file
+

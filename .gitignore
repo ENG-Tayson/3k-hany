@@ -1,0 +1,14 @@
+node_modules/
+dist/
+.env
+.env.local
+.env.*.local
+test-results/
+playwright-report/
+e2e/.auth/
+*.log
+e2e/report/
+e2e/test-results/
+e2e/evidence/*.json
+.vercel/
+.claude/settings.local.json
