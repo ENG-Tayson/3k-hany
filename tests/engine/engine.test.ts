@@ -1,6 +1,6 @@
 import Decimal from 'decimal.js';
 import { describe, expect, it } from 'vitest';
-import { addDays, cairoToday, isValidDate } from '../../src/lib/dates';
+import { addDays, cairoToday, formatDateAr, formatTimestamp, isValidDate, parseDisplayDate, toDisplayDate } from '../../src/lib/dates';
 import { decide, formatMoney, formatWeight, fromUnits, gramsText, lineAmount, parseMoney, parsePrice, parseUserNumber, parseWeight, sumMoney, toUnits } from '../../src/lib/money';
 
 // كل التوقعات مكتوبة يدويًا من المواصفات، ولا تُشتق من دوال الإنتاج.
@@ -174,5 +174,22 @@ describe('خصائص بمرجع مستقل (decimal.js)', () => {
     expect(sumMoney([...vals].sort())).toBe(total);
     expect(sumMoney([...vals, '123.45', '-123.45'])).toBe(total);
     expect(total).toBe(vals.reduce((a, v) => a.plus(v), new Decimal(0)).toFixed(2));
+  });
+});
+
+describe('عرض وإدخال التاريخ سنة/شهر/يوم', () => {
+  it('العرض', () => {
+    expect(formatDateAr('2026-10-15')).toBe('الخميس 2026/10/15');
+    expect(toDisplayDate('2026-01-05')).toBe('2026/01/05');
+    expect(formatTimestamp('2026-10-22T21:05:00Z')).toBe('2026/10/23 00:05'); // القاهرة UTC+3 صيفًا
+    expect(formatTimestamp('2026-12-31T22:30:00Z')).toBe('2027/01/01 00:30');  // UTC+2 شتاءً
+  });
+  it('الإدخال', () => {
+    expect(parseDisplayDate('2026/10/15')).toBe('2026-10-15');
+    expect(parseDisplayDate('2026-10-15')).toBe('2026-10-15');
+    expect(parseDisplayDate('2026/1/5')).toBe('2026-01-05');
+    expect(parseDisplayDate('٢٠٢٦/١٠/١٥')).toBe('2026-10-15');
+    expect(parseDisplayDate(' 2028/02/29 ')).toBe('2028-02-29');
+    for (const bad of ['', '15/10/2026', '2026/13/01', '2026/02/30', '2026/10', 'abc', '10/15/2026']) expect(parseDisplayDate(bad), bad).toBe('');
   });
 });

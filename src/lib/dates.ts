@@ -28,13 +28,31 @@ export function formatDateAr(s: string | null | undefined): string {
   if (!s) return '—';
   const [y, m, d] = s.split('-').map(Number);
   const dow = new Date(Date.UTC(y, m - 1, d)).getUTCDay();
-  return `${AR_DAYS[dow]} ${String(d).padStart(2, '0')}/${String(m).padStart(2, '0')}/${y}`;
+  return `${AR_DAYS[dow]} ${y}/${String(m).padStart(2, '0')}/${String(d).padStart(2, '0')}`;
+}
+
+/** تاريخ العمل للعرض والإدخال: سنة/شهر/يوم (2026/10/15) */
+export function toDisplayDate(iso: string): string {
+  return iso ? iso.replace(/-/g, '/') : '';
+}
+
+/** يقبل ما يكتبه المستخدم: 2026/10/15 أو 2026-10-15 أو ٢٠٢٦/١٠/١٥ (وبدون أصفار: 2026/1/5) → 2026-10-15، أو '' إذا لم يكن تاريخًا صالحًا */
+export function parseDisplayDate(input: string): string {
+  const s = input.trim()
+    .replace(/[٠-٩]/g, (c) => String(c.charCodeAt(0) - 0x0660))
+    .replace(/[۰-۹]/g, (c) => String(c.charCodeAt(0) - 0x06f0));
+  const m = /^(\d{4})[/\-.](\d{1,2})[/\-.](\d{1,2})$/.exec(s);
+  if (!m) return '';
+  const iso = `${m[1]}-${m[2].padStart(2, '0')}-${m[3].padStart(2, '0')}`;
+  return isValidDate(iso) ? iso : '';
 }
 
 /** وقت الإدخال (timestamptz) معروضًا بتوقيت القاهرة */
 export function formatTimestamp(ts: string | null | undefined): string {
   if (!ts) return '—';
-  return new Intl.DateTimeFormat('ar-EG-u-nu-latn', {
-    timeZone: 'Africa/Cairo', year: 'numeric', month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit',
-  }).format(new Date(ts));
+  const parts = new Intl.DateTimeFormat('en-GB', {
+    timeZone: 'Africa/Cairo', year: 'numeric', month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit', hourCycle: 'h23',
+  }).formatToParts(new Date(ts));
+  const g = (t: string) => parts.find((p) => p.type === t)!.value;
+  return `${g('year')}/${g('month')}/${g('day')} ${g('hour')}:${g('minute')}`;
 }

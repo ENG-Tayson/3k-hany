@@ -36,7 +36,7 @@ async function instaEntry(page: Page, o: { type: 'in' | 'out'; date: string; amo
 async function openDay(page: Page, date: string) {
   await page.goto(`/#day/${date}`);
   await expect(page.getByRole('heading', { name: /حسبة يوم/ })).toBeVisible();
-  await expect(page.locator('input[name=calc_date]')).toHaveValue(date);
+  await expect(page.locator('input[name=calc_date]')).toHaveValue(date.replace(/-/g, '/'));
 }
 async function setDaily(page: Page, field: 'cash' | 'price', value: string) {
   const card = page.locator('.card', { has: page.locator(`input[name=${field}_value]`) });
@@ -144,7 +144,7 @@ test('T16 التدفق الكامل: افتتاحيات، شراء، بيع، ت
     await setDaily(page, 'price', '6000');
     await expect(page.getByTestId('decision')).toHaveText(/الحساب متوازن/);
     await page.getByRole('button', { name: /التالي/ }).click();
-    await expect(page.locator('input[name=calc_date]')).toHaveValue('2026-10-18');
+    await expect(page.locator('input[name=calc_date]')).toHaveValue('2026/10/18');
     await expect(page.getByTestId('cash-missing')).toBeVisible();
     await expect(page.getByTestId('incomplete')).toBeVisible();
     await shot(page, '03-day18-no-cash');

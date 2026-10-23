@@ -1,7 +1,8 @@
-import { useState } from 'react';
+import { useState, type ReactNode } from 'react';
 import { DateInput, Field, Modal, NumInput, SaveStatus, TraderBalance, Weight, Money } from '../components';
 import { notifyChanged, rpc, useLoad, useSaver } from '../lib/api';
 import { formatDateAr, formatTimestamp, isValidDate } from '../lib/dates';
+import { supabase } from '../lib/supabase';
 import { parseMoney, parseWeight } from '../lib/money';
 
 export function OpeningCard({ book, opening, onSaved }: { book: 'qat' | 'insta'; opening: any; onSaved: () => void }) {
@@ -54,7 +55,7 @@ export function OpeningCard({ book, opening, onSaved }: { book: 'qat' | 'insta';
   );
 }
 
-const ACTION_AR: Record<string, string> = { create: 'إنشاء', update: 'تعديل', cancel: 'إلغاء', restore: 'استعادة' };
+const ACTION_AR: Record<string, string> = { create: 'إنشاء', update: 'تعديل', cancel: 'إلغاء', restore: 'استعادة', delete: 'حذف نهائي' };
 const FIELD_AR: Record<string, string> = {
   entry_date: 'التاريخ', entry_type: 'النوع', weight: 'الوزن', unit_price: 'السعر', amount: 'المبلغ', trader_name: 'التاجر', person_name: 'الاسم',
   note: 'الملاحظة', reason: 'السبب', status: 'الحالة', marked_paid: 'تم السداد', cash: 'الخزنة', price: 'السعر', name: 'الاسم',
@@ -119,5 +120,38 @@ export function PeriodBox({ period, weight, startDate }: { period: any; weight?:
         <span>رصيد نهاية الفترة: <strong><Money v={period.end_money} signed /></strong>{weight && <> — وزن <Weight v={period.end_weight} /></>}</span>
       </div>
     </div>
+  );
+}
+
+/** حذف نهائي: يعيد التحقق من كلمة مرور الدخول عبر Supabase Auth، والخادم يرفض الحذف بدون مصادقة حديثة. */
+export function DeleteModal({ title, summary, onDelete, onClose }: { title: string; summary: ReactNode; onDelete: (requestId: string) => Promise<any>; onClose: () => void }) {
+  const [password, setPassword] = useState('');
+  const [pwError, setPwError] = useState<string | null>(null);
+  const [checking, setChecking] = useState(false);
+  const saver = useSaver();
+  const submit = async () => {
+    if (!password) { setPwError('أدخل كلمة المرور'); return; }
+    setPwError(null);
+    setChecking(true);
+    const { data } = await supabase.auth.getUser();
+    const email = data.user?.email;
+    const { error } = email ? await supabase.auth.signInWithPassword({ email, password }) : { error: new Error('no user') };
+    setChecking(false);
+    if (error) { setPwError(/Invalid login/i.test(error.message) ? 'كلمة المرور غير صحيحة' : `تعذر التحقق: ${error.message}`); return; }
+    setPassword('');
+    const out = await saver.save('delete', (id) => onDelete(id));
+    if (out) { notifyChanged(); onClose(); }
+  };
+  return (
+    <Modal title={title} onClose={onClose}>
+      <div className="status fail" role="alert"><strong>حذف نهائي:</strong> الحركة ستُمسح من قاعدة البيانات ولن تدخل في أي حساب. يبقى سطر واحد في سجل التعديلات بقيمها. لا يمكن التراجع إلا باستعادة نسخة احتياطية.</div>
+      <div className="card">{summary}</div>
+      <Field label="كلمة مرور الدخول للتأكيد" error={pwError}>
+        <input name="delete_password" type="password" dir="ltr" autoComplete="current-password" value={password}
+          onChange={(e) => setPassword(e.target.value)} onKeyDown={(e) => e.key === 'Enter' && submit()} autoFocus />
+      </Field>
+      <div className="row"><button className="btn danger" onClick={submit} disabled={checking || saver.state.status === 'saving'}>{checking ? 'جارٍ التحقق…' : 'مسح نهائي'}</button></div>
+      <SaveStatus state={saver.state} onRetry={submit} />
+    </Modal>
   );
 }

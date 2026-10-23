@@ -111,3 +111,10 @@ input:focus-visible, select:focus-visible, button:focus-visible { outline: 3px s
   .tbl { display: table; font-size: 11px; }
   .card { border: 1px solid #999; break-inside: avoid; }
 }
+
+.btn.danger-text { color: var(--bad); }
+
+.date-input { display: inline-flex; gap: 4px; align-items: center; position: relative; }
+.date-input input[name] { width: 9.5em; font-variant-numeric: tabular-nums; text-align: left; }
+.date-input input.invalid { border-color: var(--bad); }
+.date-input .picker { position: absolute; inset-inline-start: 0; bottom: 0; width: 1px; height: 1px; opacity: 0; pointer-events: none; }

@@ -3,7 +3,7 @@ import { DateInput, Field, Modal, Money, NumInput, Pager, SaveStatus, TraderBala
 import { notifyChanged, rpc, useLoad, useSaver } from '../lib/api';
 import { cairoToday, formatDateAr, isValidDate } from '../lib/dates';
 import { formatMoney, lineAmount, parseMoney, parsePrice, parseWeight } from '../lib/money';
-import { AuditModal, CancelModal, OpeningCard, PeriodBox } from './shared';
+import { AuditModal, CancelModal, DeleteModal, OpeningCard, PeriodBox } from './shared';
 
 const TYPES = [
   { v: 'buy', l: 'شراء من التاجر (يزيد اللي عليك)' },
@@ -95,6 +95,7 @@ export function QatPage({ state, reloadState }: { state: any; reloadState: () =>
   const [editing, setEditing] = useState<any>(null);
   const [cancelling, setCancelling] = useState<any>(null);
   const [history, setHistory] = useState<string | null>(null);
+  const [deleting, setDeleting] = useState<any>(null);
   const d = list.data;
   const filtered = !!(applied.from || applied.to || applied.type || applied.search);
 
@@ -153,6 +154,7 @@ export function QatPage({ state, reloadState }: { state: any; reloadState: () =>
                   {e.status === 'active' && <button className="btn small ghost" onClick={() => setEditing(e)}>تصحيح</button>}
                   {e.status === 'active' && <button className="btn small ghost" onClick={() => setCancelling(e)}>إلغاء</button>}
                   <button className="btn small ghost" onClick={() => setHistory(e.id)}>السجل</button>
+                  <button className="btn small ghost danger-text" onClick={() => setDeleting(e)}>مسح</button>
                 </td>
               </tr>
             ))}</tbody>
@@ -166,8 +168,11 @@ export function QatPage({ state, reloadState }: { state: any; reloadState: () =>
           <EditQat e={editing} onDone={() => setEditing(null)} />
         </Modal>
       )}
-      {cancelling && <CancelModal title={`إلغاء ${TYPE_AR[cancelling.entry_type]} بتاريخ ${cancelling.entry_date}`} onClose={() => setCancelling(null)}
+      {cancelling && <CancelModal title={`إلغاء ${TYPE_AR[cancelling.entry_type]} بتاريخ ${formatDateAr(cancelling.entry_date)}`} onClose={() => setCancelling(null)}
         onConfirm={(reason, id) => rpc('cancel_qat_entry', { p_request_id: id, p_id: cancelling.id, p_expected_version: cancelling.version, p_reason: reason })} />}
+      {deleting && <DeleteModal title="مسح حركة قطعيات نهائيًا" onClose={() => setDeleting(null)}
+        summary={<>{TYPE_AR[deleting.entry_type]} — {formatDateAr(deleting.entry_date)} — {deleting.weight ? <>وزن <Weight v={deleting.weight} /> × <Money v={deleting.unit_price} /> = </> : null}<Money v={deleting.amount} />{deleting.trader_name ? ` — ${deleting.trader_name}` : ''}</>}
+        onDelete={(id) => rpc('delete_qat_entry', { p_request_id: id, p_id: deleting.id, p_expected_version: deleting.version })} />}
       {history && <AuditModal entity="qat_entries" recordId={history} onClose={() => setHistory(null)} />}
     </section>
   );

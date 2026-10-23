@@ -3,7 +3,7 @@ import { DateInput, Field, Modal, Money, NumInput, Pager, SaveStatus, useRetroCo
 import { notifyChanged, rpc, useLoad, useSaver } from '../lib/api';
 import { cairoToday, formatDateAr, isValidDate } from '../lib/dates';
 import { parseMoney } from '../lib/money';
-import { AuditModal, CancelModal, OpeningCard, PeriodBox } from './shared';
+import { AuditModal, CancelModal, DeleteModal, OpeningCard, PeriodBox } from './shared';
 
 const TYPE_AR: Record<string, string> = { in: 'تحويل وارد', out: 'سحب/استلام فلوس' };
 const LIMIT = 50;
@@ -54,6 +54,7 @@ export function InstaPage({ state, reloadState }: { state: any; reloadState: () 
   const [editing, setEditing] = useState<any>(null);
   const [cancelling, setCancelling] = useState<any>(null);
   const [history, setHistory] = useState<string | null>(null);
+  const [deleting, setDeleting] = useState<any>(null);
   const d = list.data;
   const filtered = !!(applied.from || applied.to || applied.type || applied.search);
   return (
@@ -95,6 +96,7 @@ export function InstaPage({ state, reloadState }: { state: any; reloadState: () 
                 {e.status === 'active' && <button className="btn small ghost" onClick={() => setEditing(e)}>تصحيح</button>}
                 {e.status === 'active' && <button className="btn small ghost" onClick={() => setCancelling(e)}>إلغاء</button>}
                 <button className="btn small ghost" onClick={() => setHistory(e.id)}>السجل</button>
+                <button className="btn small ghost danger-text" onClick={() => setDeleting(e)}>مسح</button>
               </td>
             </tr>
           ))}</tbody>
@@ -104,6 +106,9 @@ export function InstaPage({ state, reloadState }: { state: any; reloadState: () 
       {editing && <Modal title="تصحيح حركة إنستا" onClose={() => setEditing(null)}><EditInsta e={editing} onDone={() => setEditing(null)} /></Modal>}
       {cancelling && <CancelModal title="إلغاء حركة إنستا" onClose={() => setCancelling(null)}
         onConfirm={(reason, id) => rpc('cancel_insta_entry', { p_request_id: id, p_id: cancelling.id, p_expected_version: cancelling.version, p_reason: reason })} />}
+      {deleting && <DeleteModal title="مسح حركة إنستا نهائيًا" onClose={() => setDeleting(null)}
+        summary={<>{TYPE_AR[deleting.entry_type]} — {formatDateAr(deleting.entry_date)} — <Money v={deleting.amount} />{deleting.person_name ? ` — ${deleting.person_name}` : ''}</>}
+        onDelete={(id) => rpc('delete_insta_entry', { p_request_id: id, p_id: deleting.id, p_expected_version: deleting.version })} />}
       {history && <AuditModal entity="insta_entries" recordId={history} onClose={() => setHistory(null)} />}
     </section>
   );

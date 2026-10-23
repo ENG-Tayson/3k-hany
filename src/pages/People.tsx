@@ -3,7 +3,7 @@ import { DateInput, Field, Modal, Money, NumInput, SaveStatus, useRetroConfirm }
 import { notifyChanged, rpc, useLoad, useSaver } from '../lib/api';
 import { cairoToday, formatDateAr, isValidDate } from '../lib/dates';
 import { parseMoney } from '../lib/money';
-import { AuditModal, CancelModal } from './shared';
+import { AuditModal, CancelModal, DeleteModal } from './shared';
 
 const STATUS_AR: Record<string, string> = { unpaid: 'لم يسدد', partial: 'سداد جزئي', paid: 'تم السداد بالكامل', none: 'لا يوجد مبلغ' };
 
@@ -66,6 +66,7 @@ function PersonDetail({ id, asOf }: { id: string; asOf: string }) {
   const [err, setErr] = useState<string | null>(null);
   const [cancelling, setCancelling] = useState<any>(null);
   const [editing, setEditing] = useState<any>(null);
+  const [deleting, setDeleting] = useState<any>(null);
   const [history, setHistory] = useState<string | null>(null);
   const saver = useSaver();
   const retro = useRetroConfirm(date);
@@ -91,7 +92,8 @@ function PersonDetail({ id, asOf }: { id: string; asOf: string }) {
               <td>{e.entry_type === 'sent' ? 'بعت له فلوس' : 'استلمت منه سداد'}{e.status === 'cancelled' && <span className="tag"> ملغاة: {e.cancel_reason}</span>}</td>
               <td><Money v={e.amount} /></td><td>{e.note}</td><td><Money v={e.running} /></td>
               <td className="actions">{e.status === 'active' && <button className="btn small ghost" onClick={() => setEditing(e)}>تصحيح</button>}{e.status === 'active' && <button className="btn small ghost" onClick={() => setCancelling(e)}>إلغاء</button>}
-                <button className="btn small ghost" onClick={() => setHistory(e.id)}>السجل</button></td></tr>))}</tbody></table>
+                <button className="btn small ghost" onClick={() => setHistory(e.id)}>السجل</button>
+                <button className="btn small ghost danger-text" onClick={() => setDeleting(e)}>مسح</button></td></tr>))}</tbody></table>
       </>}
       {p.error && <div className="status fail">{p.error}</div>}
       <div className="form">
@@ -107,6 +109,9 @@ function PersonDetail({ id, asOf }: { id: string; asOf: string }) {
       </div>
       {cancelling && <CancelModal title="إلغاء حركة" onClose={() => { setCancelling(null); p.reload(); }}
         onConfirm={(reason, rid) => rpc('cancel_debt_entry', { p_request_id: rid, p_id: cancelling.id, p_expected_version: cancelling.version, p_reason: reason })} />}
+      {deleting && <DeleteModal title="مسح حركة نهائيًا" onClose={() => { setDeleting(null); p.reload(); }}
+        summary={<>{deleting.entry_type === 'sent' ? 'بعت له فلوس' : 'استلمت منه سداد'} — {formatDateAr(deleting.entry_date)} — <Money v={deleting.amount} /></>}
+        onDelete={(rid) => rpc('delete_debt_entry', { p_request_id: rid, p_id: deleting.id, p_expected_version: deleting.version })} />}
       {editing && <EditDebt e={editing} onDone={() => { setEditing(null); p.reload(); }} />}
       {history && <AuditModal entity="debt_entries" recordId={history} onClose={() => setHistory(null)} />}
     </div>

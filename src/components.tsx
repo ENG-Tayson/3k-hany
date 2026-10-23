@@ -1,6 +1,6 @@
-import { useState, type ReactNode } from 'react';
+import { useEffect, useRef, useState, type ReactNode } from 'react';
 import type { SaveState } from './lib/api';
-import { cairoToday, formatDateAr, isValidDate } from './lib/dates';
+import { cairoToday, formatDateAr, isValidDate, parseDisplayDate, toDisplayDate } from './lib/dates';
 import { absStr, formatMoney, formatWeight, isNegative } from './lib/money';
 
 export function SaveStatus({ state, onRetry }: { state: SaveState; onRetry?: () => void }) {
@@ -34,8 +34,30 @@ export function NumInput(props: { value: string; onChange: (v: string) => void; 
     placeholder={props.placeholder} onChange={(e) => props.onChange(e.target.value)} />;
 }
 
+/**
+ * إدخال تاريخ بترتيب سنة/شهر/يوم (2026/10/15) بغض النظر عن إعدادات ويندوز، مع زر تقويم.
+ * value و onChange بصيغة ISO (YYYY-MM-DD)؛ النص غير المكتمل أو غير الصالح يُبلَّغ كـ ''.
+ */
 export function DateInput({ value, onChange, name }: { value: string; onChange: (v: string) => void; name: string }) {
-  return <input type="date" name={name} value={value} min="2000-01-01" max="2100-12-31" onChange={(e) => onChange(e.target.value)} />;
+  const [text, setText] = useState(toDisplayDate(value));
+  const picker = useRef<HTMLInputElement>(null);
+  useEffect(() => {
+    if (parseDisplayDate(text) !== value) setText(toDisplayDate(value));
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [value]);
+  const invalid = text.trim() !== '' && parseDisplayDate(text) === '';
+  return (
+    <span className="date-input">
+      <input name={name} dir="ltr" inputMode="numeric" placeholder="سنة/شهر/يوم" autoComplete="off" value={text}
+        aria-invalid={invalid} className={invalid ? 'invalid' : ''}
+        onChange={(e) => { setText(e.target.value); onChange(parseDisplayDate(e.target.value)); }}
+        onBlur={() => { const iso = parseDisplayDate(text); if (iso) setText(toDisplayDate(iso)); }} />
+      <button type="button" className="btn small ghost" aria-label="اختيار من التقويم" tabIndex={-1}
+        onClick={() => { const p = picker.current; if (p) { p.value = value || ''; p.showPicker?.(); } }}>📅</button>
+      <input ref={picker} type="date" className="picker" tabIndex={-1} aria-hidden="true" min="2000-01-01" max="2100-12-31"
+        onChange={(e) => { if (e.target.value) { setText(toDisplayDate(e.target.value)); onChange(e.target.value); } }} />
+    </span>
+  );
 }
 
 export function Money({ v, signed }: { v: string | null | undefined; signed?: boolean }) {
@@ -62,7 +84,7 @@ export function useRetroConfirm(date: string) {
   const box = needs ? (
     <div className="retro" role="alert">
       ⚠ تاريخ العملية <strong>{formatDateAr(date)}</strong> وليس اليوم ({formatDateAr(today)}). ستؤثر الحركة في تقارير هذا التاريخ وما بعده.
-      <button type="button" className="btn small" onClick={() => setConfirmed(date)}>نعم، الحفظ بتاريخ {date}</button>
+      <button type="button" className="btn small" onClick={() => setConfirmed(date)}>نعم، الحفظ بتاريخ {toDisplayDate(date)}</button>
     </div>
   ) : null;
   return { needsConfirm: needs, box, reset: () => setConfirmed(null) };

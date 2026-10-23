@@ -6,7 +6,7 @@ import { EVIDENCE, login, tab } from './helpers';
 test('T13 بعد إيقاف تطبيق الويب وتشغيله: الحركات والأسماء والملاحظات والأرصدة والأسعار والحسبات كما هي', async ({ page }) => {
   await login(page);
   await page.goto('/#day/2026-10-15');
-  await expect(page.locator('input[name=calc_date]')).toHaveValue('2026-10-15');
+  await expect(page.locator('input[name=calc_date]')).toHaveValue('2026/10/15');
   await expect(page.getByTestId('price')).toContainText('5,000.00');
   await expect(page.getByTestId('cash')).toContainText('70,000.00');
   await expect(page.getByTestId('decision')).toHaveText(/بيع دهب بقيمة\s*19,000.00\s*جنيه — يعادل 3.8 جرام/);

@@ -22,8 +22,8 @@ export class Db {
     return id;
   }
 
-  session(uid: string | null) {
-    return new Session(this.pool, uid);
+  session(uid: string | null, extraClaims: Record<string, unknown> = {}) {
+    return new Session(this.pool, uid, extraClaims);
   }
 
   /** استعلام بصلاحيات postgres (إعداد/فحص فقط، وليس إثباتًا لـRLS) */
@@ -49,13 +49,13 @@ export async function freshDb(): Promise<Db> {
   return new Db(name, new pg.Pool({ ...base(), database: name, max: 8 }));
 }
 
-function claims(uid: string | null) {
-  return uid ? JSON.stringify({ sub: uid, role: 'authenticated' }) : JSON.stringify({ role: 'anon' });
+function claims(uid: string | null, extra: Record<string, unknown> = {}) {
+  return uid ? JSON.stringify({ sub: uid, role: 'authenticated', ...extra }) : JSON.stringify({ role: 'anon', ...extra });
 }
 
-async function asRole(client: pg.PoolClient | pg.Client, uid: string | null) {
+async function asRole(client: pg.PoolClient | pg.Client, uid: string | null, extra: Record<string, unknown> = {}) {
   await client.query(`set local role ${uid ? 'authenticated' : 'anon'}`);
-  await client.query(`select set_config('request.jwt.claims', $1, true)`, [claims(uid)]);
+  await client.query(`select set_config('request.jwt.claims', $1, true)`, [claims(uid, extra)]);
 }
 
 export function wrapErr(e: any): never {
@@ -65,13 +65,13 @@ export function wrapErr(e: any): never {
 
 /** يحاكي طلب PostgREST: معاملة واحدة بدور authenticated/anon وclaims الجلسة. */
 export class Session {
-  constructor(private pool: pg.Pool, public uid: string | null) {}
+  constructor(private pool: pg.Pool, public uid: string | null, private extra: Record<string, unknown> = {}) {}
 
   async rpc<T = any>(fn: string, args: Record<string, unknown> = {}): Promise<T> {
     const c = await this.pool.connect();
     try {
       await c.query(READ_ONLY.test(fn) ? 'begin read only' : 'begin');
-      await asRole(c, this.uid);
+      await asRole(c, this.uid, this.extra);
       const keys = Object.keys(args);
       const sql = `select public.${fn}(${keys.map((k, i) => `${k} => $${i + 1}`).join(', ')}) as r`;
       const res = await c.query(sql, keys.map((k) => normalize(args[k])));
@@ -90,7 +90,7 @@ export class Session {
     const c = await this.pool.connect();
     try {
       await c.query('begin');
-      await asRole(c, this.uid);
+      await asRole(c, this.uid, this.extra);
       const res = await c.query(sql, params);
       await c.query('commit');
       return res.rows;
@@ -106,7 +106,7 @@ export class Session {
   async open() {
     const c = await this.pool.connect();
     await c.query('begin');
-    await asRole(c, this.uid);
+    await asRole(c, this.uid, this.extra);
     return {
       rpc: async (fn: string, args: Record<string, unknown> = {}) => {
         const keys = Object.keys(args);
