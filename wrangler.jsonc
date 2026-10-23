@@ -1,0 +1,9 @@
+// نشر الواجهة على Cloudflare Workers كملفات ثابتة (Static Assets). لا كود سيرفر: الباك إند هو Supabase.
+{
+  "name": "3k-hany",
+  "compatibility_date": "2026-10-01",
+  "assets": {
+    "directory": "./dist",
+    "not_found_handling": "single-page-application"
+  }
+}
